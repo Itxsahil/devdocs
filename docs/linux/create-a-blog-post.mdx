@@ -1,0 +1,201 @@
+---
+sidebar_position: 3
+---
+
+# Secure Root SSH Access
+
+## why this matters
+
+by default, many linux distributions allow root login via SSH. this is a security risk:
+
+- bots scan the internet 24/7 for servers with root SSH open
+- if they guess your password, they own the entire machine
+- even with a strong password, brute force is just a matter of time
+
+the fix: disable root login, create a normal user, use `sudo` when needed.
+
+## 1. create a new user
+
+```bash
+sudo useradd -m -s /bin/bash deploy
+```
+
+add them to the sudo group:
+
+```bash
+usermod -aG sudo deploy
+```
+
+verify:
+
+```bash
+groups deploy
+```
+
+```text
+deploy : deploy sudo
+```
+
+## 2. set up SSH key for the new user
+
+copy your local public key to the server:
+
+```bash
+ssh-copy-id deploy@your-server-ip
+```
+
+or do it manually:
+
+```bash
+mkdir -p /home/deploy/.ssh
+echo "ssh-rsa AAAA..." >> /home/deploy/.ssh/authorized_keys
+chmod 700 /home/deploy/.ssh
+chmod 600 /home/deploy/.ssh/authorized_keys
+chown -R deploy:deploy /home/deploy/.ssh
+```
+
+test that you can log in:
+
+```bash
+ssh deploy@your-server-ip
+```
+
+:::warning
+do this step before disabling root login. if you skip it, you will lock yourself out of the server.
+:::
+
+## 3. disable root SSH login
+
+edit the SSH config:
+
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+
+find and change (or add) these lines:
+
+```text
+PermitRootLogin no
+PasswordAuthentication no
+```
+
+| setting | what it does |
+|---------|-------------|
+| `PermitRootLogin no` | blocks root from logging in via SSH |
+| `PasswordAuthentication no` | disables password login entirely (key-only) |
+
+:::note
+if you set `PasswordAuthentication no` without setting up SSH keys first, you will be locked out. make sure step 2 is done.
+:::
+
+## 4. restart SSH
+
+```bash
+sudo systemctl restart sshd
+```
+
+verify the config is valid before restarting:
+
+```bash
+sudo sshd -t
+```
+
+no output means no errors.
+
+## 5. verify it works
+
+open a new terminal (don't close the existing one yet):
+
+```bash
+ssh root@your-server-ip
+```
+
+should fail:
+
+```text
+Permission denied (publickey).
+```
+
+log in as your new user:
+
+```bash
+ssh deploy@your-server-ip
+```
+
+use sudo when you need root:
+
+```bash
+sudo apt update
+```
+
+## 6. optional hardening
+
+edit `/etc/ssh/sshd_config` further:
+
+```text
+# change the default port (reduces bot noise)
+Port 2222
+
+# limit authentication attempts
+MaxAuthTries 3
+
+# idle timeout (disconnect after 5 min of inactivity)
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+# disable empty passwords
+PermitEmptyPasswords no
+
+# disable X11 forwarding (unless you need it)
+X11Forwarding no
+```
+
+after each change:
+
+```bash
+sudo sshd -t && sudo systemctl restart sshd
+```
+
+:::tip
+if you change the port, update your SSH config or connect with:
+
+```bash
+ssh -p 2222 deploy@your-server-ip
+```
+:::
+
+## 7. firewall — lock it down further
+
+```bash
+sudo ufw allow 2222/tcp
+sudo ufw enable
+```
+
+verify:
+
+```bash
+sudo ufw status
+```
+
+```text
+Status: active
+
+To                         Action      From
+--                         ------      ----
+2222/tcp                   ALLOW       Anywhere
+```
+
+## recap
+
+| step | command | purpose |
+|------|---------|---------|
+| create user | `sudo useradd -m -s /bin/bash deploy` | non-root user |
+| add to sudo | `usermod -aG sudo deploy` | admin when needed |
+| copy SSH key | `ssh-copy-id deploy@server` | passwordless login |
+| disable root | `PermitRootLogin no` | block root SSH |
+| disable passwords | `PasswordAuthentication no` | key-only auth |
+| restart sshd | `systemctl restart sshd` | apply changes |
+
+:::tip
+after confirming everything works, close your existing root session and test from a fresh terminal. always keep a backup session open until you verify access.
+:::

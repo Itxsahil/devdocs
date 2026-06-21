@@ -1,0 +1,354 @@
+---
+sidebar_position: 1
+---
+
+
+
+# Azure SSH Key Resources with Azure CLI
+
+## Overview
+
+Azure provides a resource type called:
+
+```text
+Microsoft.Compute/sshPublicKeys
+```
+
+An Azure SSH Key Resource stores a **public SSH key** within a Resource Group and can be referenced when creating Virtual Machines.
+
+Unlike `ssh-keygen`, Azure can automatically generate the key pair and store the public key as an Azure resource.
+
+---
+
+## Prerequisites
+
+Verify that Azure CLI is installed:
+
+```bash
+az --version
+```
+
+Verify available Resource Groups:
+
+```bash
+az group list -o table
+```
+
+Example:
+
+```text
+Name                          Location    Status
+----------------------------  ----------  ---------
+kml_rg_main-053db231459e4be2  eastus      Succeeded
+```
+
+---
+
+# Creating an SSH Key Resource
+
+## Basic Syntax
+
+```bash
+az sshkey create \
+    --name <key-name> \
+    --resource-group <resource-group>
+```
+
+### Example
+
+```bash
+az sshkey create \
+    --name datacenter-kp \
+    --resource-group kml_rg_main-053db231459e4be2
+```
+
+Output:
+
+```text
+No public key is provided. A key pair is being generated for you.
+Private key is saved to "/root/.ssh/1782067144_4604092".
+Public key is saved to "/root/.ssh/1782067144_4604092.pub".
+```
+
+Azure automatically:
+
+1. Generates an RSA key pair.
+2. Saves the private key locally.
+3. Stores the public key in Azure.
+
+---
+
+# Generated Files
+
+When Azure generates the key pair automatically:
+
+```text
+/root/.ssh/1782067144_4604092
+/root/.ssh/1782067144_4604092.pub
+```
+
+| File        | Purpose                     |
+| ----------- | --------------------------- |
+| Private Key | Used to authenticate to VMs |
+| Public Key  | Stored in Azure             |
+
+---
+
+# Verifying RSA Key Type
+
+Display the public key:
+
+```bash
+az sshkey show \
+  --name datacenter-kp \
+  --resource-group kml_rg_main-053db231459e4be2 \
+  --query publicKey \
+  -o tsv
+```
+
+Output:
+
+```text
+ssh-rsa AAAAB3Nza...
+```
+
+The prefix:
+
+```text
+ssh-rsa
+```
+
+confirms the key type is RSA.
+
+---
+
+# Listing SSH Keys
+
+List all SSH key resources:
+
+```bash
+az sshkey list -o table
+```
+
+Example:
+
+```text
+Location    Name
+----------  ---------------
+eastus      datacenter-kp
+eastus      datacenter-kp-1
+```
+
+Only names:
+
+```bash
+az sshkey list --query "[].name" -o tsv
+```
+
+Output:
+
+```text
+datacenter-kp
+datacenter-kp-1
+```
+
+---
+
+# Viewing a Specific SSH Key
+
+## Correct Syntax
+
+```bash
+az sshkey show \
+    --resource-group kml_rg_main-053db231459e4be2 \
+    --name datacenter-kp
+```
+
+Output:
+
+```json
+{
+  "name": "datacenter-kp",
+  "location": "eastus",
+  "publicKey": "ssh-rsa ..."
+}
+```
+
+---
+
+# Common Errors
+
+## Missing Name
+
+Command:
+
+```bash
+az sshkey show --resource-group kml_rg_main-053db231459e4be2
+```
+
+Error:
+
+```text
+(--name | --ids) are required
+```
+
+Reason:
+
+Azure needs to know which SSH key resource to display.
+
+---
+
+## Typo in Parameter
+
+Command:
+
+```bash
+az sshkey show --resourec-group kml_rg_main-053db231459e4be2
+```
+
+Error:
+
+```text
+unrecognized arguments
+```
+
+Reason:
+
+The parameter is misspelled.
+
+Correct:
+
+```bash
+--resource-group
+```
+
+---
+
+## Missing Resource Group During Creation
+
+Command:
+
+```bash
+az sshkey create --name datacenter-kp
+```
+
+Result:
+
+Azure CLI will fail because the resource must belong to a Resource Group.
+
+Correct:
+
+```bash
+az sshkey create \
+    --name datacenter-kp \
+    --resource-group kml_rg_main-053db231459e4be2
+```
+
+---
+
+# Viewing the Azure Resource ID
+
+```bash
+az sshkey show \
+  --name datacenter-kp \
+  --resource-group kml_rg_main-053db231459e4be2 \
+  --query id \
+  -o tsv
+```
+
+Example:
+
+```text
+/subscriptions/<subscription-id>/resourceGroups/KML_RG_MAIN-053DB231459E4BE2/providers/Microsoft.Compute/sshPublicKeys/datacenter-kp
+```
+
+Resource hierarchy:
+
+```text
+Subscription
+└── Resource Group
+    └── Microsoft.Compute/sshPublicKeys
+        └── datacenter-kp
+```
+
+---
+
+# Listing SSH Keys as Generic Azure Resources
+
+Azure SSH keys are standard ARM resources.
+
+List them:
+
+```bash
+az resource list \
+    --resource-group kml_rg_main-053db231459e4be2 \
+    --resource-type Microsoft.Compute/sshPublicKeys \
+    -o table
+```
+
+Output:
+
+```text
+Name             ResourceGroup
+---------------  ----------------------------
+datacenter-kp    kml_rg_main-053db231459e4be2
+datacenter-kp-1  kml_rg_main-053db231459e4be2
+```
+
+---
+
+# Creating Multiple SSH Keys
+
+```bash
+az sshkey create \
+    --name datacenter-kp-1 \
+    --resource-group kml_rg_main-053db231459e4be2
+```
+
+Azure creates a completely new RSA key pair and stores it as a separate resource.
+
+---
+
+# Deleting an SSH Key
+
+```bash
+az sshkey delete \
+    --name datacenter-kp \
+    --resource-group kml_rg_main-053db231459e4be2
+```
+
+---
+
+# Importing an Existing Public Key
+
+Generate locally:
+
+```bash
+ssh-keygen -t rsa -f ~/.ssh/id_rsa
+```
+
+Import into Azure:
+
+```bash
+az sshkey create \
+    --name datacenter-kp \
+    --resource-group kml_rg_main-053db231459e4be2 \
+    --public-key "@~/.ssh/id_rsa.pub"
+```
+
+Azure stores the provided public key instead of generating a new one.
+
+---
+
+# Key Takeaways
+
+* Azure SSH Keys are ARM resources (`Microsoft.Compute/sshPublicKeys`).
+* They must belong to a Resource Group.
+* `az sshkey create` can automatically generate an RSA key pair.
+* The private key is saved locally.
+* The public key is stored in Azure.
+* `az sshkey show` requires both `--name` and `--resource-group`.
+* SSH keys can be managed either through `az sshkey` or `az resource`.
+
+
+

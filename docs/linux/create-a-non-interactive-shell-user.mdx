@@ -1,0 +1,226 @@
+---
+sidebar_position: 1
+---
+
+# Linux User Setup with Non-Interactive Shell
+
+## 1. what is a linux user?
+
+in linux, every process runs as a user.
+
+| user | what it runs |
+|------|-------------|
+| you | your terminal, your apps |
+| apache | web server |
+| mysql | database |
+| redis | cache |
+
+not every user is meant for humans. some users exist only so that applications can run securely.
+
+## 2. what is a shell?
+
+a shell is a program that lets a user execute commands.
+
+common shells:
+
+```bash
+/bin/bash
+/bin/sh
+/usr/bin/zsh
+```
+
+when you log in:
+
+```
+you → shell → linux kernel
+```
+
+the shell acts as an interpreter between you and the operating system.
+
+## 3. what is an interactive shell?
+
+an interactive shell means the user can:
+
+- login via SSH
+- open a terminal
+- run commands
+- change directories
+- execute programs
+
+## 4. why don't we want every user to log in?
+
+imagine an apache web server. does apache need to:
+
+- open a terminal? no
+- login through SSH? no
+- run `ls`, `cd`, `vim`? no
+
+it only needs permission to:
+
+- read website files
+- write logs
+- serve web pages
+
+giving it login access would be a security risk.
+
+## 5. what is a non-interactive shell?
+
+a non-interactive shell prevents login.
+
+the user exists:
+
+| capability | allowed? |
+|-----------|----------|
+| own files | yes |
+| run services | yes |
+| log in | no |
+| get a terminal | no |
+
+## 6. how does linux prevent the login?
+
+linux stores user information in `/etc/passwd`.
+
+example entry:
+
+```text
+ravi:x:1001:1001::/home/ravi:/usr/sbin/nologin
+```
+
+fields:
+
+```text
+username:password:UID:GID:comment:home:shell
+```
+
+breaking it down:
+
+| field | value |
+|-------|-------|
+| username | `ravi` |
+| password | `x` (shadow) |
+| UID | `1001` |
+| GID | `1001` |
+| comment | (empty) |
+| home | `/home/ravi` |
+| shell | `/usr/sbin/nologin` |
+
+the important part is the last field: `/usr/sbin/nologin`
+
+when linux tries to log in as ravi:
+
+1. reads `/etc/passwd`
+2. sees the shell is `nologin`
+3. refuses the login
+
+## 7. what happens during login?
+
+**normal user:**
+
+```text
+SSH Login
+   ↓
+Check /etc/passwd
+   ↓
+Shell = /bin/bash
+   ↓
+Open terminal ✅
+```
+
+**non-interactive user:**
+
+```text
+SSH Login
+   ↓
+Check /etc/passwd
+   ↓
+Shell = /usr/sbin/nologin
+   ↓
+Reject login ❌
+```
+
+## 8. why do companies create these users?
+
+**security.**
+
+imagine a hacker compromises apache. if apache has:
+
+```bash
+/bin/bash
+```
+
+the attacker gets a shell.
+
+if apache has:
+
+```bash
+/usr/sbin/nologin
+```
+
+the attacker cannot log in as that user.
+
+this follows the **principle of least privilege**: give only the permissions that are necessary.
+
+## 9. how do we create one?
+
+**step 1** — create the user:
+
+```bash
+sudo useradd -s /usr/sbin/nologin ravi
+```
+
+meaning:
+
+| flag | value | purpose |
+|------|-------|---------|
+| (command) | `useradd` | create user |
+| `-s` | `/usr/sbin/nologin` | specify shell |
+| (arg) | `ravi` | username |
+
+**step 2** — verify:
+
+```bash
+grep ravi /etc/passwd
+```
+
+output:
+
+```text
+ravi:x:1001:1001::/home/ravi:/usr/sbin/nologin
+```
+
+**step 3** — try logging in:
+
+```bash
+su - ravi
+```
+
+output:
+
+```text
+This account is currently not available.
+```
+
+success. the user exists but cannot get a shell.
+
+## 10. real-world examples
+
+service users on a typical server:
+
+```bash
+cat /etc/passwd | grep nologin
+```
+
+you may see:
+
+```text
+apache:x:48:48::/usr/share/httpd:/sbin/nologin
+mysql:x:27:27::/var/lib/mysql:/sbin/nologin
+nginx:x:998:998::/var/lib/nginx:/sbin/nologin
+redis:x:997:997::/var/lib/redis:/sbin/nologin
+```
+
+these users exist to own files and run services — not for anyone to log in as.
+
+:::tip
+next time you spin up a container or a vm, check `/etc/passwd` for `nologin` users. you'll see them everywhere.
+:::

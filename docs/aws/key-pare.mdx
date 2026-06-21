@@ -1,0 +1,111 @@
+---
+sidebar_position: 1
+---
+
+# Key Pair
+
+The best way to learn AWS CLI commands is to keep the official docs open while doing labs.
+
+### AWS CLI EC2 Key Pair Commands
+
+#### `describe-key-pairs`
+
+Lists key pairs.
+
+[describe-key-pairs documentation](https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-key-pairs.html?utm_source=sahilkhan.site)
+
+Example:
+
+```bash
+aws ec2 describe-key-pairs \
+  --region us-east-1
+```
+
+---
+
+#### `create-key-pair`
+
+Creates a new key pair.
+
+[create-key-pair documentation](https://docs.aws.amazon.com/cli/latest/reference/ec2/create-key-pair.html?utm_source=sahilkhan.site)
+
+Example:
+
+```bash
+aws ec2 create-key-pair \
+  --key-name datacenter-kp \
+  --key-type rsa \
+  --region us-east-1
+```
+
+Save the private key:
+
+```bash
+aws ec2 create-key-pair \
+  --key-name datacenter-kp \
+  --key-type rsa \
+  --query 'KeyMaterial' \
+  --output text \
+  > datacenter-kp.pem
+```
+
+---
+
+#### `delete-key-pair`
+
+Deletes a key pair.
+
+[delete-key-pair documentation](https://docs.aws.amazon.com/cli/latest/reference/ec2/delete-key-pair.html?utm_source=sahilkhan.site)
+
+Example:
+
+```bash
+aws ec2 delete-key-pair \
+  --key-name datacenter-kp \
+  --region us-east-1
+```
+
+---
+
+### EC2 Key Pair Concepts
+
+AWS EC2 User Guide:
+
+[Amazon EC2 key pairs documentation](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html?utm_source=sahilkhan.site)
+
+This explains:
+
+* RSA vs ED25519
+* Public/private key cryptography
+* How SSH authentication works
+* Importing existing keys
+* Creating keys through Console and CLI
+
+---
+
+### AWS CLI Fundamentals
+
+If you're serious about learning AWS through the terminal, this guide is worth reading once from start to finish:
+
+[AWS CLI User Guide](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-welcome.html?utm_source=sahilkhan.site)
+
+Focus on:
+
+* Configuration (`aws configure`)
+* Profiles
+* Regions
+* Output formats (`json`, `table`, `text`)
+* JMESPath queries (`--query`)
+
+---
+
+### A Useful Habit
+
+For any AWS resource in your labs:
+
+1. Create it in the Console once.
+2. Find the equivalent CLI command in the docs.
+3. Recreate it with the CLI.
+4. Later, learn the Terraform resource for it.
+
+That progression (Console → CLI → Terraform) is how many DevOps engineers become comfortable with AWS.

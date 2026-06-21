@@ -1,0 +1,276 @@
+.heroBanner {
+  padding: 4rem 0;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+.terminal {
+  max-width: 720px;
+  margin: 0 auto;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+.terminalBar {
+  background: #1a1a1a;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #444;
+}
+
+.dot:first-child { background: #5f4f4f; }
+.dot:nth-child(2) { background: #4f5f4f; }
+.dot:nth-child(3) { background: #4f4f5f; }
+
+.terminalTitle {
+  margin-left: 0.5rem;
+  color: #777;
+  font-size: 0.8rem;
+}
+
+.terminalBody {
+  background: #0d0d0d;
+  padding: 1.5rem;
+  color: #b0b0b0;
+}
+
+.terminalLine {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.prompt {
+  color: #6a9955;
+  margin-right: 0.5rem;
+}
+
+.comment {
+  color: #606060;
+}
+
+.heroTitle {
+  font-size: 2.5rem;
+  color: #e0e0e0;
+  margin: 1rem 0 0.3rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.tagline {
+  color: #777;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.terminalOutput {
+  color: #999;
+  font-size: 0.9rem;
+  margin: 0.3rem 0 1rem;
+  padding-left: 1.2rem;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ctaButton {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.95rem;
+  border: 1px solid #444 !important;
+  background: #1a1a1a !important;
+  color: #b0b0b0 !important;
+}
+
+.ctaButton:hover {
+  background: #222 !important;
+  border-color: #666 !important;
+  color: #e0e0e0 !important;
+}
+
+/* Why Section */
+.whySection {
+  padding: 4rem 0;
+  background: #0a0a0a;
+  border-top: 1px solid #1a1a1a;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.sectionTitle {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 1.3rem;
+  color: #6a9955;
+  margin-bottom: 2rem;
+  font-weight: 400;
+}
+
+.whyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.whyCard {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.whyCommand {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  color: #6a9955;
+  margin-bottom: 0.5rem;
+}
+
+.whyText {
+  color: #999;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.whyText code {
+  background: #1a1a1a;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  color: #b08fd8;
+}
+
+/* Conversation Section */
+.conversationSection {
+  padding: 4rem 0;
+}
+
+.chatLog {
+  max-width: 720px;
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 1.5rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+}
+
+.chatEntry {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.chatEntry:last-child {
+  border-bottom: none;
+}
+
+.chatUser {
+  color: #6a9955;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chatTime {
+  color: #444;
+  font-size: 0.75rem;
+}
+
+.chatMsg {
+  color: #aaa;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.chatMsg code {
+  background: #1a1a1a;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  color: #b08fd8;
+  font-size: 0.85rem;
+}
+
+/* Quick Start / man page section */
+.quickStart {
+  padding: 4rem 0;
+  background: #0a0a0a;
+  border-top: 1px solid #1a1a1a;
+}
+
+.manPage {
+  max-width: 720px;
+  background: #0d0d0d;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 1.5rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.manHeader {
+  color: #666;
+  border-bottom: 1px solid #222;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.manName {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.manName strong {
+  color: #ccc;
+}
+
+.manCode {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 1rem;
+  color: #999;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2rem 1rem;
+  }
+
+  .heroTitle {
+    font-size: 1.8rem;
+  }
+
+  .whyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chatEntry {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .chatTime {
+    display: none;
+  }
+}

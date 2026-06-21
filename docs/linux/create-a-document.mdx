@@ -1,0 +1,146 @@
+---
+sidebar_position: 2
+---
+
+# Temporary User Setup with Expiry
+
+## why would you want a temporary user?
+
+- contractor needs server access for a week
+- intern is working on a one-off migration
+- vendor needs to debug something, then leave
+- you want to give someone access without remembering to revoke it later
+
+the `-e` flag on `useradd` sets an account expiration date. after that date, the user cannot log in — no cron job, no manual cleanup needed.
+
+## 1. create the user with an expiry date
+
+```bash
+useradd -e 2027-12-31 tempuser
+```
+
+| flag | meaning |
+|------|---------|
+| `-e` | account expiration date (format: `YYYY-MM-DD`) |
+| `tempuser` | username |
+
+:::note
+this only sets the account expiry. the user has no password yet and no shell specified. combine with `-s` and `-m` as needed:
+
+```bash
+useradd -e 2027-12-31 -s /bin/bash -m tempuser
+```
+
+this creates the user, gives them a home directory, and sets a login shell — all expiring on the date.
+:::
+
+## 2. verify the expiry date
+
+```bash
+chage -l tempuser
+```
+
+output:
+
+```text
+Last password change                    : Jun 21, 2026
+Password expires                        : never
+Password inactive                       : never
+Account expires                         : Dec 31, 2027
+Minimum number of days between password change  : 0
+Maximum number of days between password change  : 99999
+Number of days of warning before password expires : 7
+```
+
+the line that matters is `Account expires`.
+
+## 3. set a password
+
+```bash
+passwd tempuser
+```
+
+without a password, the user cannot log in even before the expiry date.
+
+## 4. manually expire a user early
+
+sometimes the contractor leaves early. no need to wait:
+
+```bash
+usermod -e 1970-01-01 tempuser
+```
+
+setting the expiry to a past date immediately disables the account.
+
+or use `expiredate`:
+
+```bash
+chage -E 1970-01-01 tempuser
+```
+
+both do the same thing.
+
+## 5. extend the expiry date
+
+project got delayed? extend the access:
+
+```bash
+usermod -e 2028-06-30 tempuser
+```
+
+verify:
+
+```bash
+chage -l tempuser | grep "Account expires"
+```
+
+## 6. remove the user when done
+
+```bash
+userdel -r tempuser
+```
+
+the `-r` flag removes the home directory and mail spool.
+
+:::warning
+if the user has running processes, `userdel` will fail. kill them first:
+
+```bash
+pkill -u tempuser
+userdel -r tempuser
+```
+:::
+
+
+## real-world example
+
+setting up a contractor with 30-day access:
+
+```bash
+# create user with 30-day expiry
+useradd -e $(date -d "+30 days" +%Y-%m-%d) -s /bin/bash -m contractor
+
+# set password
+passwd contractor
+
+# add to sudo group (if needed)
+usermod -aG wheel contractor
+
+# verify
+chage -l contractor
+```
+
+when the 30 days are up, the account locks itself. no reminder needed.
+
+:::tip
+combine this with SSH key authentication for a clean setup:
+
+```bash
+# add their public key
+mkdir -p /home/contractor/.ssh
+echo "ssh-rsa AAAA..." >> /home/contractor/.ssh/authorized_keys
+chmod 700 /home/contractor/.ssh
+chmod 600 /home/contractor/.ssh/authorized_keys
+chown -R contractor:contractor /home/contractor/.ssh
+```
+:::

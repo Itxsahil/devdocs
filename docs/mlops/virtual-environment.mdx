@@ -1,0 +1,255 @@
+---
+sidebar_position: 1
+---
+
+
+# Python Virtual Environment Setup for ML Project
+
+## Objective
+
+Set up a standardized Python virtual environment for a machine learning project and generate a dependency file for reproducibility.
+
+### Requirements
+
+* Create a Python virtual environment named `ml-env`.
+* Install the following packages:
+
+  * `numpy`
+  * `pandas`
+  * `scikit-learn`
+  * `matplotlib`
+* Generate a `requirements.txt` file using `pip freeze`.
+
+---
+
+## Prerequisites
+
+Verify Python 3 is installed:
+
+```bash
+python3 --version
+```
+
+Expected output:
+
+```text
+Python 3.x.x
+```
+
+---
+
+## Step 1: Create the Working Directory
+
+```bash
+mkdir -p /root/code
+```
+
+Verify:
+
+```bash
+ls -ld /root/code
+```
+
+---
+
+## Step 2: Create the Virtual Environment
+
+Create a virtual environment named `ml-env` under `/root/code`.
+
+```bash
+python3 -m venv /root/code/ml-env
+```
+
+Verify:
+
+```bash
+ls /root/code
+```
+
+Expected output:
+
+```text
+ml-env
+```
+
+---
+
+## Step 3: Activate the Virtual Environment
+
+```bash
+source /root/code/ml-env/bin/activate
+```
+
+Your shell prompt should now display:
+
+```text
+(ml-env)
+```
+
+Verify the Python interpreter:
+
+```bash
+which python
+```
+
+Expected output:
+
+```text
+/root/code/ml-env/bin/python
+```
+
+---
+
+## Step 4: Install Required ML Libraries
+
+Install the required machine learning and data analysis packages:
+
+```bash
+pip install numpy pandas scikit-learn matplotlib
+```
+
+Verify installed packages:
+
+```bash
+pip list
+```
+
+Example output:
+
+```text
+Package        Version
+-------------- -------
+numpy          x.x.x
+pandas         x.x.x
+scikit-learn   x.x.x
+matplotlib     x.x.x
+```
+
+---
+
+## Step 5: Generate requirements.txt
+
+Create a dependency snapshot using `pip freeze`.
+
+```bash
+pip freeze > /root/code/requirements.txt
+```
+
+Verify:
+
+```bash
+cat /root/code/requirements.txt
+```
+
+Example output:
+
+```text
+numpy==2.x.x
+pandas==2.x.x
+scikit-learn==1.x.x
+matplotlib==3.x.x
+...
+```
+
+---
+
+## Validation Checklist
+
+### Verify Virtual Environment
+
+```bash
+ls -ld /root/code/ml-env
+```
+
+### Verify Installed Packages
+
+```bash
+pip show numpy pandas scikit-learn matplotlib
+```
+
+### Verify Requirements File
+
+```bash
+ls -l /root/code/requirements.txt
+```
+
+---
+
+## Complete Command Sequence
+
+```bash
+mkdir -p /root/code
+
+python3 -m venv /root/code/ml-env
+
+source /root/code/ml-env/bin/activate
+
+pip install numpy pandas scikit-learn matplotlib
+
+pip freeze > /root/code/requirements.txt
+```
+
+---
+
+## Expected Directory Structure
+
+```text
+/root/code
+├── ml-env/
+│   ├── bin/
+│   ├── lib/
+│   └── pyvenv.cfg
+└── requirements.txt
+```
+
+---
+
+## Common Issues
+
+### requirements.txt Not Found
+
+Incorrect:
+
+```bash
+cat requirment.txt
+```
+
+Correct:
+
+```bash
+cat requirements.txt
+```
+
+### Virtual Environment Not Activated
+
+Check:
+
+```bash
+which python
+```
+
+If the output does not point to:
+
+```text
+/root/code/ml-env/bin/python
+```
+
+activate the environment again:
+
+```bash
+source /root/code/ml-env/bin/activate
+```
+
+### Empty requirements.txt
+
+Ensure packages are installed before running:
+
+```bash
+pip freeze > requirements.txt
+```
+
+Verify package installation:
+
+```bash
+pip list
+```
