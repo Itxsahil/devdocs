@@ -1,0 +1,426 @@
+---
+sidebar_position: 2
+---
+
+# Azure VM Creation using Azure CLI
+
+## Objective
+
+Create an Azure Virtual Machine (VM) named **nautilus-vm** as part of an incremental cloud migration project.
+
+### Requirements
+
+* Use the existing Resource Group.
+* VM Name: `nautilus-vm`
+* Region: `centralus`
+* Image: Ubuntu 24.04 LTS
+* VM Size: `Standard_B1s`
+* Allow SSH access on port `22`
+* OS Disk Size: `30 GB`
+* Storage Type: Standard HDD
+* Verify SSH connectivity after deployment
+
+---
+
+# Prerequisites
+
+## Login to Azure
+
+Authenticate using the Azure credentials provided in the lab.
+
+```bash
+az login
+```
+
+Verify the active subscription:
+
+```bash
+az account show -o table
+```
+
+---
+
+# Step 1: Identify the Existing Resource Group
+
+List available resource groups:
+
+```bash
+az group list -o table
+```
+
+Output:
+
+```text
+Name                          Location    Status
+----------------------------  ----------  ---------
+kml_rg_main-fbfc96181909474e  eastus      Succeeded
+```
+
+Store the resource group name in a variable:
+
+```bash
+RG=kml_rg_main-fbfc96181909474e
+```
+
+Verify:
+
+```bash
+echo $RG
+```
+
+Output:
+
+```text
+kml_rg_main-fbfc96181909474e
+```
+
+---
+
+# Step 2: Generate SSH Key Pair
+
+Check existing SSH keys:
+
+```bash
+ls ~/.ssh/
+```
+
+Output:
+
+```text
+authorized_keys
+```
+
+Since no key pair exists, generate one:
+
+```bash
+ssh-keygen -t rsa -b 4096
+```
+
+Accept the default file location:
+
+```text
+/root/.ssh/id_rsa
+```
+
+Verify the generated files:
+
+```bash
+ls ~/.ssh/
+```
+
+Output:
+
+```text
+authorized_keys
+id_rsa
+id_rsa.pub
+```
+
+View the public key:
+
+```bash
+cat ~/.ssh/id_rsa.pub
+```
+
+---
+
+# Understanding the SSH Key Pair
+
+Azure uses SSH key authentication instead of passwords for Linux virtual machines.
+
+The generated files are:
+
+| File       | Purpose                           |
+| ---------- | --------------------------------- |
+| id_rsa     | Private key (keep secret)         |
+| id_rsa.pub | Public key (uploaded to Azure VM) |
+
+During VM creation, Azure installs the public key on the server.
+
+When connecting:
+
+```bash
+ssh azureuser@<public-ip>
+```
+
+The private key proves your identity.
+
+---
+
+# Step 3: Create the Virtual Machine
+
+Execute:
+
+```bash
+az vm create \
+  --resource-group $RG \
+  --name nautilus-vm \
+  --location centralus \
+  --image Ubuntu2404 \
+  --size Standard_B1s \
+  --admin-username azureuser \
+  --authentication-type ssh \
+  --ssh-key-values ~/.ssh/id_rsa.pub \
+  --public-ip-sku Standard \
+  --storage-sku Standard_LRS \
+  --os-disk-size-gb 30
+```
+
+---
+
+# Understanding the Command
+
+## Resource Group
+
+```bash
+--resource-group $RG
+```
+
+Specifies where Azure should create the resources.
+
+---
+
+## VM Name
+
+```bash
+--name nautilus-vm
+```
+
+Creates a VM named:
+
+```text
+nautilus-vm
+```
+
+---
+
+## Region
+
+```bash
+--location centralus
+```
+
+Deploys the VM in the Central US Azure region.
+
+---
+
+## Operating System
+
+```bash
+--image Ubuntu2404
+```
+
+Uses:
+
+```text
+Ubuntu Server 24.04 LTS
+```
+
+---
+
+## VM Size
+
+```bash
+--size Standard_B1s
+```
+
+Specifications:
+
+* 1 vCPU
+* 1 GB RAM
+* Suitable for testing and learning environments
+
+---
+
+## SSH Authentication
+
+```bash
+--authentication-type ssh
+```
+
+Disables password login and enables key-based authentication.
+
+---
+
+## SSH Public Key
+
+```bash
+--ssh-key-values ~/.ssh/id_rsa.pub
+```
+
+Uploads the public key to the VM.
+
+---
+
+## Storage Type
+
+```bash
+--storage-sku Standard_LRS
+```
+
+Creates a Standard HDD-backed managed disk.
+
+LRS means:
+
+```text
+Locally Redundant Storage
+```
+
+Azure keeps three copies of the data within the same datacenter.
+
+---
+
+## Disk Size
+
+```bash
+--os-disk-size-gb 30
+```
+
+Creates a:
+
+```text
+30 GB Operating System Disk
+```
+
+---
+
+# Resources Created Automatically
+
+The Azure CLI automatically creates:
+
+```text
+Virtual Machine
+Virtual Network (VNet)
+Subnet
+Network Interface (NIC)
+Public IP Address
+Network Security Group (NSG)
+OS Disk
+```
+
+This simplifies deployment significantly.
+
+---
+
+# Step 4: Open SSH Port
+
+Allow inbound SSH traffic:
+
+```bash
+az vm open-port \
+  --resource-group $RG \
+  --name nautilus-vm \
+  --port 22
+```
+
+This creates an NSG rule:
+
+```text
+Protocol : TCP
+Port     : 22
+Action   : Allow
+```
+
+---
+
+# Step 5: Retrieve Public IP Address
+
+Get the VM's public IP:
+
+```bash
+az vm show \
+  --resource-group $RG \
+  --name nautilus-vm \
+  -d \
+  --query publicIps \
+  -o tsv
+```
+
+Example output:
+
+```text
+20.84.xx.xx
+```
+
+---
+
+# Step 6: Connect to the VM
+
+SSH into the VM:
+
+```bash
+ssh azureuser@20.84.xx.xx
+```
+
+First connection prompt:
+
+```text
+Are you sure you want to continue connecting (yes/no)?
+```
+
+Type:
+
+```text
+yes
+```
+
+Successful login:
+
+```bash
+azureuser@nautilus-vm:~$
+```
+
+---
+
+# Verification
+
+Verify VM configuration:
+
+```bash
+az vm show \
+  -g $RG \
+  -n nautilus-vm \
+  --query "{name:name,location:location,size:hardwareProfile.vmSize,disk:storageProfile.osDisk.diskSizeGb}" \
+  -o table
+```
+
+Expected:
+
+```text
+Name         Location    Size          Disk
+-----------  ----------  ------------  ----
+nautilus-vm  centralus   Standard_B1s  30
+```
+
+---
+
+# Lab Validation Checklist
+
+| Requirement                  | Status |
+| ---------------------------- | ------ |
+| Existing Resource Group Used | ✅      |
+| VM Name: nautilus-vm         | ✅      |
+| Region: centralus            | ✅      |
+| Ubuntu 24.04 LTS             | ✅      |
+| VM Size: Standard_B1s        | ✅      |
+| SSH Allowed on Port 22       | ✅      |
+| 30 GB Disk                   | ✅      |
+| Standard HDD Storage         | ✅      |
+| SSH Login Successful         | ✅      |
+
+---
+
+# Key Learning Outcomes
+
+After completing this exercise, you should understand:
+
+* Azure Resource Groups
+* Azure Virtual Machines
+* SSH Key Authentication
+* Azure Managed Disks
+* Azure Network Security Groups (NSGs)
+* Public IP Addresses
+* Azure CLI-based VM provisioning
+* Secure remote access using SSH
+
+This workflow mirrors how Linux virtual machines are commonly provisioned in real-world DevOps environments.

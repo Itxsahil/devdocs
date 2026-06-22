@@ -1,0 +1,671 @@
+---
+sidebar_position: 4
+---
+
+
+# Linux File Permissions Explained for Complete Beginners
+
+## Understanding Why `chmod +x` Was Not Enough
+
+---
+
+# 1. Introduction
+
+In Linux, every file and directory has a set of permissions that determine:
+
+* Who can read the file
+* Who can modify the file
+* Who can execute the file
+
+Understanding permissions is one of the most important skills for every Linux administrator.
+
+In this lesson, we will learn:
+
+* What file permissions are
+* How to read permissions
+* How `chmod` works
+* Why a shell script needs both **read** and **execute** permissions
+* Why `chmod +x` alone did not work
+
+---
+
+# 2. The Scenario
+
+Suppose we have a shell script:
+
+```bash
+/tmp/xfusioncorp.sh
+```
+
+Let's check its permissions:
+
+```bash
+ls -l /tmp/xfusioncorp.sh
+```
+
+Output:
+
+```bash
+---------- 1 root root 40 Jun 22 18:23 /tmp/xfusioncorp.sh
+```
+
+---
+
+# 3. Understanding `ls -l`
+
+The command:
+
+```bash
+ls -l
+```
+
+means:
+
+* `ls` → List files
+* `-l` → Show detailed information (long format)
+
+Example:
+
+```bash
+-rwxr-xr-x 1 root root 40 Jun 22 18:23 file.sh
+```
+
+Every part has a meaning.
+
+---
+
+# 4. Breaking Down File Permissions
+
+Example:
+
+```text
+-rwxr-xr-x
+```
+
+Let's divide it:
+
+```text
+- rwx r-x r-x
+│ │   │   │
+│ │   │   └── Others
+│ │   └────── Group
+│ └────────── Owner
+└──────────── File type
+```
+
+---
+
+# 5. The First Character
+
+The first character tells us the file type.
+
+| Symbol | Meaning          |
+| ------ | ---------------- |
+| `-`    | Regular file     |
+| `d`    | Directory        |
+| `l`    | Symbolic link    |
+| `c`    | Character device |
+| `b`    | Block device     |
+
+Example:
+
+```text
+-rwxr-xr-x
+^
+```
+
+The `-` means it is a regular file.
+
+---
+
+# 6. The Permission Groups
+
+Linux divides permissions into three groups:
+
+## Owner (User)
+
+The person who owns the file.
+
+## Group
+
+Users that belong to the file's group.
+
+## Others
+
+Everyone else on the system.
+
+Example:
+
+```text
+-rwxr-xr-x
+ └┬┘└┬┘└┬┘
+  │   │   │
+Owner Group Others
+```
+
+---
+
+# 7. The Three Permission Types
+
+Linux has three permissions.
+
+## Read (`r`)
+
+Value:
+
+```text
+4
+```
+
+Allows:
+
+* Open a file
+* View its contents
+
+Example:
+
+```bash
+cat file.txt
+less file.txt
+nano file.txt
+```
+
+---
+
+## Write (`w`)
+
+Value:
+
+```text
+2
+```
+
+Allows:
+
+* Modify the file
+* Delete its contents
+* Add new content
+
+Example:
+
+```bash
+echo "hello" >> file.txt
+nano file.txt
+```
+
+---
+
+## Execute (`x`)
+
+Value:
+
+```text
+1
+```
+
+Allows:
+
+* Run a program
+* Execute a script
+
+Example:
+
+```bash
+./script.sh
+./program
+```
+
+---
+
+# 8. Numeric Permission Values
+
+| Permission | Value |
+| ---------- | ----- |
+| r          | 4     |
+| w          | 2     |
+| x          | 1     |
+
+We add the numbers.
+
+---
+
+## Example
+
+### rwx
+
+```text
+4 + 2 + 1 = 7
+```
+
+### rw-
+
+```text
+4 + 2 = 6
+```
+
+### r-x
+
+```text
+4 + 1 = 5
+```
+
+### r--
+
+```text
+4 = 4
+```
+
+### --x
+
+```text
+1 = 1
+```
+
+---
+
+# 9. Understanding `chmod`
+
+`chmod` means:
+
+```text
+Change Mode
+```
+
+It changes file permissions.
+
+Syntax:
+
+```bash
+chmod permissions file
+```
+
+---
+
+# 10. Symbolic Method
+
+## Add execute permission
+
+```bash
+chmod +x file
+```
+
+---
+
+## Add read permission
+
+```bash
+chmod +r file
+```
+
+---
+
+## Add write permission
+
+```bash
+chmod +w file
+```
+
+---
+
+## Remove execute permission
+
+```bash
+chmod -x file
+```
+
+---
+
+# 11. Who Gets the Permission?
+
+| Symbol | Meaning      |
+| ------ | ------------ |
+| u      | User (Owner) |
+| g      | Group        |
+| o      | Others       |
+| a      | All          |
+
+---
+
+Examples:
+
+### Owner only
+
+```bash
+chmod u+x file
+```
+
+### Group only
+
+```bash
+chmod g+x file
+```
+
+### Others only
+
+```bash
+chmod o+x file
+```
+
+### Everyone
+
+```bash
+chmod a+x file
+```
+
+---
+
+# 12. Our File's Initial State
+
+```bash
+---------- /tmp/xfusioncorp.sh
+```
+
+This means:
+
+```text
+Owner  : ---
+Group  : ---
+Others : ---
+```
+
+Nobody can do anything.
+
+---
+
+# 13. Giving Execute Permission
+
+We ran:
+
+```bash
+sudo chmod a+x /tmp/xfusioncorp.sh
+```
+
+Permissions became:
+
+```bash
+---x--x--x
+```
+
+This means:
+
+```text
+Owner  : execute
+Group  : execute
+Others : execute
+```
+
+---
+
+# 14. Trying to Execute the Script
+
+```bash
+./xfusioncorp.sh
+```
+
+Error:
+
+```bash
+/bin/bash: ./xfusioncorp.sh: Permission denied
+```
+
+Why?
+
+---
+
+# 15. Understanding How Shell Scripts Work
+
+Suppose the script contains:
+
+```bash
+#!/bin/bash
+
+echo "Welcome To KodeKloud"
+```
+
+The first line:
+
+```bash
+#!/bin/bash
+```
+
+is called the:
+
+# Shebang
+
+It tells Linux:
+
+> "Run this file using `/bin/bash`."
+
+---
+
+# 16. What Happens Internally?
+
+When you run:
+
+```bash
+./xfusioncorp.sh
+```
+
+Linux does this:
+
+### Step 1
+
+Kernel sees:
+
+```bash
+#!/bin/bash
+```
+
+### Step 2
+
+Kernel starts:
+
+```bash
+/bin/bash
+```
+
+### Step 3
+
+Bash tries to read:
+
+```bash
+xfusioncorp.sh
+```
+
+### Step 4
+
+Bash cannot read the file.
+
+### Step 5
+
+Bash shows:
+
+```bash
+Permission denied
+```
+
+---
+
+# 17. Why Can't Bash Read It?
+
+Because permissions are:
+
+```bash
+---x--x--x
+```
+
+There is:
+
+```text
+No read permission.
+```
+
+Bash needs:
+
+```text
+Read permission.
+```
+
+---
+
+# 18. The Fix
+
+Give everyone:
+
+* Read permission
+* Execute permission
+
+```bash
+sudo chmod a+rx /tmp/xfusioncorp.sh
+```
+
+or
+
+```bash
+sudo chmod 555 /tmp/xfusioncorp.sh
+```
+
+---
+
+# 19. Final Permissions
+
+```bash
+-r-xr-xr-x
+```
+
+Breaking it down:
+
+```text
+Owner  : r-x
+Group  : r-x
+Others : r-x
+```
+
+Everyone can:
+
+* Read
+* Execute
+
+Nobody can:
+
+* Modify
+
+---
+
+# 20. Why Does This Work?
+
+Now the sequence is:
+
+```text
+Run script
+      ↓
+Kernel starts Bash
+      ↓
+Bash reads file
+      ↓
+Bash executes commands
+      ↓
+Script runs successfully
+```
+
+---
+
+# 21. Verification
+
+```bash
+./xfusioncorp.sh
+```
+
+Output:
+
+```bash
+Welcome To KodeKloud
+```
+
+---
+
+# 22. Important Concept
+
+## Compiled Program
+
+Example:
+
+```bash
+./firefox
+./nginx
+```
+
+Usually only needs:
+
+```text
+--x
+```
+
+because the kernel executes the binary directly.
+
+---
+
+## Shell Script
+
+Example:
+
+```bash
+./script.sh
+./backup.sh
+```
+
+Needs:
+
+```text
+r-x
+```
+
+because the interpreter must read the file.
+
+---
+
+# 23. Commands Summary
+
+## View permissions
+
+```bash
+ls -l file
+```
+
+## Add execute permission
+
+```bash
+chmod a+x file
+```
+
+## Add read and execute permission
+
+```bash
+chmod a+rx file
+```
+
+## Set permissions numerically
+
+```bash
+chmod 555 file
+```
+
+---
+
+# 24. Final Takeaway
+
+Remember these two rules:
+
+### Binary executable
+
+```text
+Needs: x
+```
+
+### Script file
+
+```text
+Needs: r + x
+```
+
+This small difference is one of the most important concepts in Linux permissions and often appears in system administration interviews and certification exams.

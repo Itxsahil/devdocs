@@ -1,0 +1,440 @@
+---
+sidebar_position: 2
+---
+
+# AWS Security Group Creation Using AWS CLI
+
+## Objective
+
+Create a Security Group named **devops-sg** in the **default VPC** within the **us-east-1** region.
+
+The Security Group must contain the following inbound rules:
+
+| Protocol | Port | Source    |
+| -------- | ---- | --------- |
+| HTTP     | 80   | 0.0.0.0/0 |
+| SSH      | 22   | 0.0.0.0/0 |
+
+Description:
+
+```text
+Security group for Nautilus App Servers
+```
+
+---
+
+# Understanding the Task
+
+Before creating anything, it is important to understand what AWS is asking us to do.
+
+## What is a VPC?
+
+A Virtual Private Cloud (VPC) is a logically isolated network inside AWS where we launch resources such as:
+
+* EC2 Instances
+* Databases
+* Load Balancers
+
+Think of a VPC as your private datacenter network inside AWS.
+
+Example:
+
+```text
+AWS Account
+│
+└── VPC
+    ├── EC2 Instance
+    ├── Security Group
+    ├── Subnet
+    └── Route Table
+```
+
+---
+
+## What is a Security Group?
+
+A Security Group acts like a firewall for AWS resources.
+
+It controls:
+
+* Who can connect to your server
+* Which ports are allowed
+* Which protocols are permitted
+
+Example:
+
+```text
+Internet
+    │
+    ▼
+Security Group
+    │
+    ▼
+EC2 Instance
+```
+
+If traffic is not allowed by the Security Group, it is blocked.
+
+---
+
+## Understanding the Required Rules
+
+### HTTP Rule
+
+HTTP is used for websites.
+
+```text
+Protocol: TCP
+Port: 80
+Source: 0.0.0.0/0
+```
+
+Meaning:
+
+Anyone on the internet can access the web server.
+
+---
+
+### SSH Rule
+
+SSH is used to remotely connect to Linux servers.
+
+```text
+Protocol: TCP
+Port: 22
+Source: 0.0.0.0/0
+```
+
+Meaning:
+
+Anyone on the internet can attempt an SSH connection.
+
+Note:
+
+In production environments this is usually restricted to specific IP addresses rather than 0.0.0.0/0.
+
+---
+
+# Step 1: Find the Default VPC
+
+List all VPCs:
+
+```bash
+aws ec2 describe-vpcs
+```
+
+Output:
+
+```json
+{
+  "VpcId": "vpc-02f40ff5d25d82eca",
+  "IsDefault": true
+}
+```
+
+Notice:
+
+```json
+"IsDefault": true
+```
+
+This tells us it is the default VPC.
+
+---
+
+## Retrieve Only the VPC ID
+
+Instead of displaying all information:
+
+```bash
+aws ec2 describe-vpcs \
+    --filters "Name=isDefault,Values=true" \
+    --region us-east-1 \
+    --query "Vpcs[0].VpcId" \
+    --output text
+```
+
+Output:
+
+```text
+vpc-02f40ff5d25d82eca
+```
+
+Store it in a variable:
+
+```bash
+VPC_ID=vpc-02f40ff5d25d82eca
+```
+
+Verify:
+
+```bash
+echo $VPC_ID
+```
+
+Output:
+
+```text
+vpc-02f40ff5d25d82eca
+```
+
+---
+
+# Understanding Shell Variables
+
+This is a common beginner mistake.
+
+### Wrong
+
+```bash
+echo VPC_ID
+```
+
+Output:
+
+```text
+VPC_ID
+```
+
+The shell prints the text literally.
+
+### Correct
+
+```bash
+echo $VPC_ID
+```
+
+Output:
+
+```text
+vpc-02f40ff5d25d82eca
+```
+
+The `$` tells the shell to use the variable's value.
+
+---
+
+# Step 2: Create the Security Group
+
+Command:
+
+```bash
+aws ec2 create-security-group \
+    --group-name devops-sg \
+    --description "Security group for Nautilus App Servers" \
+    --vpc-id $VPC_ID \
+    --region us-east-1
+```
+
+Output:
+
+```json
+{
+  "GroupId": "sg-03b9fc19890001480"
+}
+```
+
+---
+
+## Why Quotes Are Important
+
+You initially tried:
+
+```bash
+--description Security group for Nautilus App Servers
+```
+
+AWS CLI interpreted:
+
+```text
+Security
+group
+for
+Nautilus
+App
+Servers
+```
+
+as separate arguments.
+
+Result:
+
+```text
+Unknown options: group, for, Nautilus...
+```
+
+Correct usage:
+
+```bash
+--description "Security group for Nautilus App Servers"
+```
+
+Quotes keep the entire sentence together as one argument.
+
+---
+
+# Step 3: Save the Security Group ID
+
+Store the Group ID:
+
+```bash
+SG_ID=sg-03b9fc19890001480
+```
+
+Verify:
+
+```bash
+echo $SG_ID
+```
+
+Output:
+
+```text
+sg-03b9fc19890001480
+```
+
+---
+
+# Step 4: Add HTTP Inbound Rule
+
+Command:
+
+```bash
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_ID \
+    --protocol tcp \
+    --port 80 \
+    --cidr 0.0.0.0/0 \
+    --region us-east-1
+```
+
+Explanation:
+
+| Parameter        | Meaning                     |
+| ---------------- | --------------------------- |
+| --group-id       | Security Group to modify    |
+| --protocol tcp   | Use TCP protocol            |
+| --port 80        | Allow port 80               |
+| --cidr 0.0.0.0/0 | Allow traffic from anywhere |
+
+---
+
+# Step 5: Add SSH Inbound Rule
+
+Command:
+
+```bash
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_ID \
+    --protocol tcp \
+    --port 22 \
+    --cidr 0.0.0.0/0 \
+    --region us-east-1
+```
+
+Explanation:
+
+| Parameter        | Meaning                  |
+| ---------------- | ------------------------ |
+| --group-id       | Security Group to modify |
+| --protocol tcp   | TCP traffic              |
+| --port 22        | SSH Port                 |
+| --cidr 0.0.0.0/0 | Allow from anywhere      |
+
+---
+
+# Step 6: Verify the Configuration
+
+Display Security Group details:
+
+```bash
+aws ec2 describe-security-groups \
+    --group-ids $SG_ID \
+    --region us-east-1
+```
+
+Expected Output:
+
+```json
+{
+  "GroupName": "devops-sg",
+  "Description": "Security group for Nautilus App Servers",
+  "IpPermissions": [
+    {
+      "FromPort": 80,
+      "ToPort": 80
+    },
+    {
+      "FromPort": 22,
+      "ToPort": 22
+    }
+  ]
+}
+```
+
+---
+
+# Visual Summary
+
+```text
+                Internet
+                    │
+                    │
+          ┌─────────▼─────────┐
+          │   Security Group  │
+          │     devops-sg     │
+          └─────────┬─────────┘
+                    │
+        ┌───────────┴───────────┐
+        │                       │
+        ▼                       ▼
+
+ TCP 80 (HTTP)           TCP 22 (SSH)
+ 0.0.0.0/0               0.0.0.0/0
+```
+
+---
+
+# Commands Used
+
+```bash
+aws ec2 describe-vpcs
+
+aws ec2 create-security-group \
+    --group-name devops-sg \
+    --description "Security group for Nautilus App Servers" \
+    --vpc-id $VPC_ID \
+    --region us-east-1
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_ID \
+    --protocol tcp \
+    --port 80 \
+    --cidr 0.0.0.0/0 \
+    --region us-east-1
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_ID \
+    --protocol tcp \
+    --port 22 \
+    --cidr 0.0.0.0/0 \
+    --region us-east-1
+
+aws ec2 describe-security-groups \
+    --group-ids $SG_ID \
+    --region us-east-1
+```
+
+---
+
+# Key Concepts Learned
+
+* What a VPC is
+* What a Security Group is
+* Difference between HTTP and SSH
+* How to find the default VPC
+* How to create a Security Group using AWS CLI
+* How to add inbound rules
+* How shell variables work
+* Why quotes are required for arguments containing spaces
+* How to verify AWS resources using the CLI
